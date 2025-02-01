@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>X-11 WORLD</title>
+    <script type="module" src="https://unpkg.com/@google/model-viewer@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Press+Start+2P&display=swap');
+
+        body {
+            background: #0a0a0a;
+            color: white;
+            font-family: 'Orbitron', sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background: #1e1e1e;
+            padding: 15px 0;
+            font-size: 20px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        #nftContainer {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            padding: 20px;
+            justify-content: center;
+        }
+
+        .nft-card {
+            background: linear-gradient(145deg, #ffcb05, #e6be20);
+            border: 5px solid #ffcb05;
+            padding: 20px;
+            border-radius: 15px;
+            transition: transform 0.4s, box-shadow 0.4s;
+            text-align: center;
+            font-family: 'Press Start 2P', cursive;
+            position: relative;
+            box-shadow: 0px 5px 15px rgba(255, 203, 5, 0.5);
+            overflow: hidden;
+            animation: float 3s infinite ease-in-out;
+        }
+
+        .nft-card:hover {
+            transform: scale(1.1) rotate(3deg);
+            box-shadow: 0px 10px 30px rgba(255, 203, 5, 0.9);
+        }
+
+        model-viewer {
+            width: 100%;
+            height: 250px;
+            background: #111;
+            border-radius: 10px;
+        }
+
+        .hp {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: red;
+            color: white;
+            padding: 5px;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .attack {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 8px;
+            border-radius: 8px;
+            margin-top: 5px;
+            font-size: 12px;
+            font-weight: bold;
+            color: #111;
+        }
+
+        footer {
+            background: #1e1e1e;
+            padding: 10px;
+            font-size: 14px;
+            margin-top: 20px;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+    </style>
+</head>
+<body>
+
+<header>X-11 WORLD</header>
+<div id="nftContainer">Loading NFTs...</div>
+<footer>&copy; 2025 X-11. All Rights Reserved.</footer>
+
+<script>
+    const CONTRACTS_WITH_TOKENS = {
+    "0x495f947276749Ce646f68AC8c248420045cb7b5e": [
+        "43623865844705828108714916222055076404597289653878477427013925236896920764516",
+        "43623865844705828108714916222055076404597289653878477427013925237996432392292",
+        "43623865844705828108714916222055076404597289653878477427013925235797409136830",
+        "43623865844705828108714916222055076404597289653878477427013925234697897509014",
+        "43623865844705828108714916222055076404597289653878477427013925233598385881388",
+        "43623865844705828108714916222055076404597289653878477427013925232498874253512",
+        "43623865844705828108714916222055076404597289653878477427013925231399362626036",
+        "43623865844705828108714916222055076404597289653878477427013925230299850998360",
+        "43623865844705828108714916222055076404597289653878477427013925229200339370384",
+        "43623865844705828108714916222055076404597289653878477427013925228100827742308"
+    ],
+    "0x2953399124F0cBB46d2CbACD8A89cF0599974963": [
+        "43623865844705828108714916222055076404597289653878477427013925256688130064484",
+        "43623865844705828108714916222055076404597289653878477427013925255588618436708",
+        "43623865844705828108714916222055076404597289653878477427013925254489106808932",
+        "43623865844705828108714916222055076404597289653878477427013925253389595181256",
+        "43623865844705828108714916222055076404597289653878477427013925252290083553379",
+        "43623865844705828108714916222055076404597289653878477427013925251190571925604",
+        "43623865844705828108714916222055076404597289653878477427013925250091060297858",
+        "43623865844705828108714916222055076404597289653878477427013925248991548670052",
+        "43623865844705828108714916222055076404597289653878477427013925247892037043176",
+        "43623865844705828108714916222055076404597289653878477427013925246792525414500",
+        "43623865844705828108714916222055076404597289653878477427013925245693013786724",
+        "43623865844705828108714916222055076404597289653878477427013925241294967275580",
+        "43623865844705828108714916222055076404597289653878477427013925231399362625636"
+    ]
+};
+
+
+    const ENCRYPTED_API_KEY = "NDI1NWE3MDM4ZmU5NDZmN2E1OTM0NTBlZmQ0YTYxYTk=";
+    const API_KEY = atob(ENCRYPTED_API_KEY);
+    const nftContainer = document.getElementById("nftContainer");
+
+    async function fetchNFTs() {
+        nftContainer.innerHTML = "<p>Loading NFTs...</p>";
+
+        try {
+            let allNFTs = [];
+
+            for (const contract in CONTRACTS_WITH_TOKENS) {
+                for (const token of CONTRACTS_WITH_TOKENS[contract]) {
+                    const OPENSEA_API_URL = `https://api.opensea.io/api/v2/chain/matic/contract/${contract}/nfts/${token}`;
+                    
+                    const response = await fetch(OPENSEA_API_URL, {
+                        headers: API_KEY ? { "X-API-KEY": API_KEY } : {}
+                    });
+
+                    if (!response.ok) {
+                        console.warn(`Failed to fetch NFT: ${contract} - ${token}`);
+                        continue;
+                    }
+
+                    const data = await response.json();
+                    if (data.nft) {
+                        allNFTs.push(data.nft);
+                    }
+                }
+            }
+
+            if (allNFTs.length === 0) {
+                nftContainer.innerHTML = "<p>No NFTs found.</p>";
+                return;
+            }
+
+            nftContainer.innerHTML = "";
+
+            allNFTs.forEach(nft => {
+                const imageUrl = nft.image_url || "https://via.placeholder.com/200";
+                const modelUrl = nft.animation_url;
+                const name = nft.name || "Unnamed NFT";
+                const link = nft.permalink || "#";
+                const hp = Math.floor(Math.random() * 200) + 100;
+                const cardColor = ["#ff5733", "#33ff57", "#3357ff"][Math.floor(Math.random() * 3)];
+
+                const card = document.createElement("div");
+                card.className = "nft-card";
+                card.style.borderColor = cardColor;
+                card.style.boxShadow = `0px 5px 15px ${cardColor}`;
+
+                card.innerHTML = `
+                    <div class="hp">HP ${hp}</div>
+                    ${
+                        modelUrl
+                        ? `<model-viewer src="${modelUrl}" alt="${name}" auto-rotate camera-controls></model-viewer>`
+                        : `<img src="${imageUrl}" alt="${name}">`
+                    }
+                    <h3>${name}</h3>
+                    <a href="${link}" target="_blank" style="color: ${cardColor};">View on OpenSea</a>
+                `;
+
+                nftContainer.appendChild(card);
+            });
+
+        } catch (error) {
+            console.error("Error fetching NFTs:", error);
+            nftContainer.innerHTML = "Failed to load NFTs.";
+        }
+    }
+
+    window.onload = fetchNFTs;
+</script>
+
+</body>
+</html>
